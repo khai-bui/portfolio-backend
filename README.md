@@ -54,3 +54,42 @@ DB_PASSWORD=your_password
 JWT_SECRET=your_secret
 ADMIN_USERNAME=admin
 ADMIN_PASSWORD=your_admin_password
+
+# Portfolio Backend API
+
+A RESTful backend API for managing a personal developer portfolio.
+
+The application provides public APIs for displaying profile information,
+projects, and technical skills, while administrative operations are protected
+using JWT authentication and role-based authorization.
+
+## Tech Stack
+
+- Java 25
+- Spring Boot 4
+- Spring Data JPA
+- Spring Security
+- JWT Authentication
+- PostgreSQL
+- Swagger / OpenAPI
+- Docker & Docker Compose
+- JUnit
+- Mockito
+- GitHub Actions
+
+## Architecture
+
+```mermaid
+flowchart TD
+    Client[Client / Swagger / Frontend]
+
+    Client --> Controller
+
+    Controller --> Validation[DTO + Validation]
+    Validation --> Service
+    Service --> Repository
+    Repository --> DB[(PostgreSQL)]
+
+    Client --> Security[Spring Security]
+    Security --> JWT[JWT Authentication]
+    JWT --> Controller

@@ -1,13 +1,12 @@
 package com.bmk.portfolio.controller;
 
+import com.bmk.portfolio.dto.ProfileRequest;
 import com.bmk.portfolio.model.Profile;
 import com.bmk.portfolio.service.ProfileService;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.http.ResponseEntity;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import com.bmk.portfolio.dto.ProfileRequest;
-import jakarta.validation.Valid;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
