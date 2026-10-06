@@ -1,7 +1,23 @@
 # Portfolio Backend API
 
 Backend REST API for managing personal portfolio data including profile, projects, and skills.
+## Live Demo
 
+- Swagger UI: https://portfolio-backend-production-bae31.up.railway.app/swagger-ui.html
+- OpenAPI Docs: https://portfolio-backend-production-bae31.up.railway.app/v3/api-docs
+
+## Project Highlights
+
+- RESTful API built with Spring Boot
+- PostgreSQL persistence with Spring Data JPA
+- JWT authentication and role-based authorization
+- Public read APIs and ADMIN-protected write APIs
+- DTO validation and global exception handling
+- Swagger/OpenAPI documentation
+- Unit and security testing with JUnit, Mockito and MockMvc
+- Dockerized application with Docker Compose
+- CI pipeline with GitHub Actions
+- Deployed on Railway with managed PostgreSQL
 ## Tech Stack
 
 - Java 25
