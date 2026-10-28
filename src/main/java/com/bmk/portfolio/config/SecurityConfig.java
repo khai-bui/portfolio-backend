@@ -20,10 +20,14 @@ import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 @EnableWebSecurity
 @Configuration
@@ -33,60 +37,56 @@ public class SecurityConfig {
     private String jwtSecret;
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http)
-            throws Exception {
-
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+                // 1. CHỈ ĐỊNH RÕ RÀNG NGUỒN CẤU HÌNH CORS
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
-
                 .sessionManagement(session ->
-                        session.sessionCreationPolicy(
-                                SessionCreationPolicy.STATELESS
-                        )
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
-
                 .authorizeHttpRequests(auth -> auth
-
+                        // 2. Cho phép Preflight và đường dẫn mặc định
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(
+                                "/error",
                                 "/api/auth/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/v3/api-docs/**"
                         ).permitAll()
 
-                        .requestMatchers(
-                                HttpMethod.GET,
-                                "/api/profile/**",
-                                "/api/projects/**",
-                                "/api/skills/**"
-                        ).permitAll()
+                        // 3. GỘP CHUNG: Mở toàn bộ request GET để đọc dữ liệu tự do
+                        .requestMatchers(HttpMethod.GET, "/api/**").permitAll()
 
-                        .requestMatchers(
-                                HttpMethod.POST,
-                                "/api/**"
-                        ).hasRole("ADMIN")
-
-                        .requestMatchers(
-                                HttpMethod.PUT,
-                                "/api/**"
-                        ).hasRole("ADMIN")
-
-                        .requestMatchers(
-                                HttpMethod.DELETE,
-                                "/api/**"
-                        ).hasRole("ADMIN")
-
+                        .requestMatchers(HttpMethod.POST, "/api/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
-
                 .oauth2ResourceServer(oauth2 ->
                         oauth2.jwt(jwt ->
-                                jwt.jwtAuthenticationConverter(
-                                        jwtAuthenticationConverter()
-                                )
+                                jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())
                         )
                 );
+
         return http.build();
+    }
+
+    // 4. CẤU HÌNH TỐI ĐA CHO CORS
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+
+        // Dùng dấu * để chấp nhận MỌI tên miền (Localhost, Netlify, Vercel, v.v.)
+        config.setAllowedOriginPatterns(List.of("*"));
+        config.setAllowedMethods(List.of("*")); // Chấp nhận mọi Method
+        config.setAllowedHeaders(List.of("*")); // Chấp nhận mọi Header
+        config.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
     }
 
     @Bean
@@ -98,12 +98,8 @@ public class SecurityConfig {
     public AuthenticationManager authenticationManager(
             CustomUserDetailsService userDetailsService,
             PasswordEncoder passwordEncoder) {
-
-        DaoAuthenticationProvider provider =
-                new DaoAuthenticationProvider(userDetailsService);
-
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider(userDetailsService);
         provider.setPasswordEncoder(passwordEncoder);
-
         return new ProviderManager(provider);
     }
 
@@ -117,32 +113,22 @@ public class SecurityConfig {
 
     @Bean
     public JwtEncoder jwtEncoder(SecretKey secretKey) {
-        return NimbusJwtEncoder
-                .withSecretKey(secretKey)
-                .build();
+        return NimbusJwtEncoder.withSecretKey(secretKey).build();
     }
 
     @Bean
     public JwtDecoder jwtDecoder(SecretKey secretKey) {
-        return NimbusJwtDecoder
-                .withSecretKey(secretKey)
-                .build();
+        return NimbusJwtDecoder.withSecretKey(secretKey).build();
     }
+
     @Bean
     public JwtAuthenticationConverter jwtAuthenticationConverter() {
-
-        JwtGrantedAuthoritiesConverter authoritiesConverter =
-                new JwtGrantedAuthoritiesConverter();
-
+        JwtGrantedAuthoritiesConverter authoritiesConverter = new JwtGrantedAuthoritiesConverter();
         authoritiesConverter.setAuthoritiesClaimName("roles");
         authoritiesConverter.setAuthorityPrefix("");
 
-        JwtAuthenticationConverter converter =
-                new JwtAuthenticationConverter();
-
+        JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
         converter.setJwtGrantedAuthoritiesConverter(authoritiesConverter);
-
         return converter;
     }
-
 }
